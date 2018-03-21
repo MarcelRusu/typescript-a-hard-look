@@ -1,0 +1,358 @@
+---
+author: 'Marcel-Alin Rusu'
+title: 'TypeScript : A Hard Look'
+
+...
+
+# TypeScript
+
+# What is it
+
+. . .
+
+- JavaScript with types
+
+. . .
+
+```JavaScript
+const a: String = 'hello'
+```
+
+. . .
+
+- Type inference
+
+```JavaScript
+const a = 'hello'
+```
+
+. . .
+
+```JavaScript
+// a: String, b: Number, c: Array<Number>
+const { a, b, c } = { a: '5', b: 5, c: [5] }
+```
+
+. . .
+
+- Compile time errors
+
+```JavaScript
+let a: string = 's'
+a = 5 // ERROR
+```
+
+# What is it, cont.
+
+. . .
+
+
+- Transpiled language to JavaScript
+
+. . .
+
+```JavaScript
+//TypeScript
+class Box {
+  width  : Number
+  height : Number
+  constructor(w: Number, h: Number) {
+    this.width  = w
+    this.height = h
+  }
+  calcArea() {
+    return this.width * this.height
+  }
+}
+```
+
+# What is it, cont.
+
+- Result
+
+```JavaScript
+//Transpiled JavaScript
+var Box = /** @class */ = (function (){
+  function Box(w, h) {
+    this.width  = w
+    this.height = h
+  }
+  Box.prototype.calcArea = function() {
+    return this.width * this.height
+  }
+  return Box
+})()
+```
+
+# Many Good Things
+
+- Interfaces
+
+```JavaScript
+interface IBox {
+  calcArea : () => Number
+}
+```
+
+. . .
+
+```JavaScript
+// usage
+const doSomethingWithArea = (b: IBox) => b.calcArea() ** 5
+```
+
+# More Good Things
+
+- Type Aliases
+
+- Useful for more _descriptive_ types
+
+. . .
+
+```Haskell
+type Worth = Number
+```
+
+. . .
+
+```JavaScript
+interface Car {
+  calcWorth : () => Worth
+}
+```
+
+
+. . .
+
+...also more interesting types...
+
+# More Complex Types
+
+- Type Aliases can be used to describe Objects and literal values
+
+. . .
+
+```Haskell
+type Damage = Number
+
+type Angle  = Number
+
+type Point  = [Number, Number]
+
+type Health = Number
+
+type Bullet = {
+  direction : Angle,
+  speed     : Number,
+  position  : Point,
+  dmg       : Damage
+}
+
+type Person = [Point, Health]
+```
+
+# Usage
+
+- Combining this with object deconstruction becomes very powerful
+
+. . .
+
+```JavaScript
+// return type inferred to be Number
+const updatePerson = ([[personX, personY], personHp]: Person, { position, dmg }: Bullet): Person => {
+  const [bulletX, bulletY] = position
+
+  if (bulletX === personX && bulletY === personY)
+    return [[personX, personY], personHp - dmg]
+  else
+    return [[personX, personY], personHp]
+}
+```
+
+. . .
+
+- We can do even more crazy things like make string literals types
+
+```Haskell
+type Marcel = 'Marcel'
+```
+
+. . .
+
+- Union Types
+
+```Haskell
+type CounterAction = 'Increment' | 'Decrement'
+```
+
+# Intersection Types
+
+. . .
+
+```JavaScript
+interface Reader {
+  read: () => String
+}
+
+interface Writer {
+  write: (string) => void
+}
+
+type ReaderWriter = Reader & Writer
+```
+
+. . .
+
+```JavaScript
+const readAndWrite = (file: ReaderWriter) => {
+  const content = file.read()
+  const newContent = contents.split('').map(s => s + s).join('')
+  file.write(newContent)
+}
+```
+
+. . .
+
+- Combining Union and Intersection types we can create interesting algebraic data types
+
+. . .
+
+- But that's outside the scope of this talk
+
+# Ugly side of TypeScript
+
+. . .
+
+- It is still JavaScript
+
+# "*Fake*" Types
+
+- Interfaces and Type Aliases go away once compiled
+
+. . .
+
+- From this
+
+```Haskell
+type A = { a: Number }
+type B = { b: Number }
+type C = A | B
+```
+
+. . .
+
+- To This >:(
+```JavaScript
+```
+
+. . .
+
+- There's intentionally nothing there
+
+. . .
+
+- This means no run time type checking -> no polymorphism on non class types
+
+# "*Fake*" Types cont.
+
+- Ideally you'd be able to do something like this
+
+```JavaScript
+// this doesn't compile
+const f = (c: C) => {
+  if (c instanceof A)
+    return 'A'
+  else
+    return 'B'
+}
+```
+
+. . .
+
+- This makes usage of algebraic data types in typescript painful
+
+# Type Inference fails too often - Ex "Tuples"
+
+. . .
+
+- Recall
+
+```Haskell
+type Point = [Number, Number]
+```
+
+. . .
+
+```JavaScript
+// inferred return type is Number[][]
+const squarePoints = (points: Point[]) =>
+  points.map(([x, y]) => [x ** 2, y ** 2])
+```
+
+. . .
+
+- This would be fine if TypeScript thought Number[][] <=> [Number, Number][]
+
+# Type Inference fails too often - Ex "Strict Null Checks"
+
+. . .
+
+- There is a compiler option for tsc called --strictNullChecks
+
+. . .
+
+```JavaScript
+let a: undefined | Number = undefined
+try {
+  a = 5
+  // other stuff that may throw an exception
+} catch {
+  // Type Error - Object is possibly undefined
+  console.log(a * 5)
+}
+```
+
+- I just wish it wasn't a pain to with
+
+# Type Inference fails too often - Ex Inferred Function Parameters
+
+. . .
+
+```JavaScript
+// infers x to have type `any`
+const f = x => x * 5
+```
+
+. . .
+
+... Ok this one may be on JavaScript's type coercion properities
+
+
+# Conclusion
+
+. . .
+
+- TypeScript is a Band-Aide solution
+
+. . .
+
+- There are many great things about it
+- Union Types, Intersection Types, Some level of Type Inference
+
+. . .
+
+- But since it's trying to conform to JavaScript practices it's doomed for failure
+
+. . .
+
+- We will never get proper pattern matching in TypeScript
+
+. . .
+
+- Type inference will always be held back by JavaScript's loose type system
+
+# Thank you
+
+. . .
+
+- Presentation was made using *Patat*
